@@ -38,6 +38,7 @@ export 'src/models/media_picker_config.dart'
 export 'src/models/camera_capture_config.dart';
 export 'src/models/gallery_picker_config.dart';
 export 'src/models/image_processing_config.dart';
+export 'src/models/interactive_crop_config.dart';
 export 'src/models/media_picker_presets.dart';
 export 'src/models/media_picker_callbacks.dart';
 
@@ -58,6 +59,10 @@ export 'src/permissions/permission_service.dart'
 export 'src/adapters/camera_capture_adapter.dart';
 export 'src/adapters/gallery_picker_adapter.dart';
 export 'src/adapters/image_cropper_adapter.dart';
+export 'src/adapters/image_cropper/image_cropper_crop_adapter.dart'
+    show ImageCropperCropAdapter;
+export 'src/adapters/desktop/passthrough_crop_adapter.dart'
+    show PassthroughCropAdapter;
 
 // Processing interface (for custom processors).
 export 'src/processing/image_processor.dart';

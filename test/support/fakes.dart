@@ -32,6 +32,36 @@ class FakeGalleryAdapter implements GalleryPickerAdapter {
   }
 }
 
+/// A crop adapter whose behavior is scripted for tests (no native calls).
+///
+/// * [croppedPath] is returned as the cropped file path.
+/// * [returnsNull] simulates the user cancelling the crop editor.
+/// * [throwError], when set, is thrown to simulate a cropper failure.
+class FakeCropAdapter implements ImageCropperAdapter {
+  String croppedPath;
+  bool returnsNull;
+  Object? throwError;
+  int calls = 0;
+  InteractiveCropConfig? lastConfig;
+
+  FakeCropAdapter({
+    this.croppedPath = '/tmp/cropped.jpg',
+    this.returnsNull = false,
+    this.throwError,
+  });
+
+  @override
+  Future<String?> crop({
+    required String imagePath,
+    required InteractiveCropConfig config,
+  }) async {
+    calls++;
+    lastConfig = config;
+    if (throwError != null) throw throwError!;
+    return returnsNull ? null : croppedPath;
+  }
+}
+
 /// An image processor that returns its input unchanged (no native calls).
 class PassThroughProcessor implements ImageProcessor {
   int calls = 0;

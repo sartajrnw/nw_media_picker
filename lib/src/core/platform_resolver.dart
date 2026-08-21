@@ -3,8 +3,11 @@ import 'package:flutter/foundation.dart';
 
 import '../adapters/android/android_camera_adapter.dart';
 import '../adapters/camera_capture_adapter.dart';
+import '../adapters/desktop/passthrough_crop_adapter.dart';
 import '../adapters/desktop/unsupported_camera_adapter.dart';
 import '../adapters/gallery_picker_adapter.dart';
+import '../adapters/image_cropper/image_cropper_crop_adapter.dart';
+import '../adapters/image_cropper_adapter.dart';
 import '../adapters/ios/ios_camera_adapter.dart';
 import '../gallery/image_picker_gallery_adapter.dart';
 import '../logging/media_picker_logger.dart';
@@ -109,6 +112,17 @@ class PlatformResolver {
       case TargetPlatform.windows:
         return const UnsupportedCameraCaptureAdapter();
     }
+  }
+
+  /// Resolves the interactive crop adapter for the current platform.
+  ///
+  /// * Android / iOS → the `image_cropper`-backed editor, themed with [theme].
+  /// * Desktop → a pass-through that returns the original image unchanged.
+  ImageCropperAdapter resolveCropAdapter({required MediaPickerTheme theme}) {
+    if (isMobile) {
+      return ImageCropperCropAdapter(theme: theme, logger: logger);
+    }
+    return PassthroughCropAdapter(logger: logger);
   }
 
   /// Probes which camera lenses are available (mobile only; cached).

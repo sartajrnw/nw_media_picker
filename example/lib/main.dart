@@ -82,6 +82,23 @@ class _HomePageState extends State<HomePage> {
     label: 'Pick Image…',
   );
 
+  Future<void> _cropImage() => _run(
+    () => NWMediaPicker.pickImage(
+      context,
+      config: const MediaPickerConfig(
+        crop: InteractiveCropConfig(
+          toolbarTitle: 'Adjust photo',
+        ),
+        processing: ImageProcessingConfig(
+          quality: 85,
+          maxWidth: 1600,
+          maxHeight: 1600,
+        ),
+      ),
+    ),
+    label: 'Pick & crop…',
+  );
+
   Future<void> _camera() =>
       _run(() => NWMediaPicker.camera(context), label: 'Opening camera…');
 
@@ -192,6 +209,7 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.all(16),
           children: [
             _ActionButton('Pick Image', Icons.add_a_photo, _pickImage),
+            _ActionButton('Pick & Crop Image', Icons.crop, _cropImage),
             _ActionButton('Take Photo', Icons.photo_camera, _camera),
             _ActionButton(
               'Choose Gallery Image',

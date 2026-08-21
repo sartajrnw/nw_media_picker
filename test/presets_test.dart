@@ -15,11 +15,20 @@ void main() {
       }
     });
 
-    test('profilePhoto prefers the front camera and square crop', () {
+    test('profilePhoto prefers the front camera and circular crop', () {
       const preset = MediaPickerPresets.profilePhoto;
       expect(preset.camera.preferredLens, CameraLens.front);
       expect(preset.processing.cropAspectRatio, 1);
       expect(preset.processing.maxWidth, 1000);
+      expect(preset.crop.enabled, isTrue);
+      expect(preset.crop.shape, CropShape.oval);
+    });
+
+    test('squareImage enables an interactive square crop', () {
+      const preset = MediaPickerPresets.squareImage;
+      expect(preset.crop.enabled, isTrue);
+      expect(preset.crop.aspectRatio, 1);
+      expect(preset.crop.lockAspectRatio, isTrue);
     });
 
     test('productPhoto uses the back camera at ~1600px', () {

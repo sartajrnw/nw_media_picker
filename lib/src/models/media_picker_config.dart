@@ -4,6 +4,7 @@ import '../theme/media_picker_theme.dart';
 import 'camera_capture_config.dart';
 import 'gallery_picker_config.dart';
 import 'image_processing_config.dart';
+import 'interactive_crop_config.dart';
 import 'media_result.dart';
 import 'media_source.dart';
 
@@ -42,7 +43,13 @@ class MediaPickerConfig {
   /// Gallery selection configuration.
   final GalleryPickerConfig gallery;
 
-  /// Image optimization configuration applied after selection/capture.
+  /// Interactive crop configuration. When [InteractiveCropConfig.enabled] is
+  /// true, the user is shown a crop editor after capture/selection and before
+  /// [processing] runs. Defaults to disabled.
+  final InteractiveCropConfig crop;
+
+  /// Image optimization configuration applied after selection/capture (and
+  /// after interactive cropping, when enabled).
   final ImageProcessingConfig processing;
 
   /// Optional theme override. When null, a theme is derived from the host
@@ -63,6 +70,7 @@ class MediaPickerConfig {
     this.sources = const [MediaSource.camera, MediaSource.gallery],
     this.camera = const CameraCaptureConfig(),
     this.gallery = const GalleryPickerConfig(),
+    this.crop = InteractiveCropConfig.disabled,
     this.processing = const ImageProcessingConfig(),
     this.theme,
     this.showPreviewAfterCapture = true,
@@ -77,6 +85,7 @@ class MediaPickerConfig {
     }
     camera.validate();
     gallery.validate();
+    crop.validate();
     processing.validate();
   }
 
@@ -94,6 +103,7 @@ class MediaPickerConfig {
     List<MediaSource>? sources,
     CameraCaptureConfig? camera,
     GalleryPickerConfig? gallery,
+    InteractiveCropConfig? crop,
     ImageProcessingConfig? processing,
     MediaPickerTheme? theme,
     bool? showPreviewAfterCapture,
@@ -104,6 +114,7 @@ class MediaPickerConfig {
       sources: sources ?? this.sources,
       camera: camera ?? this.camera,
       gallery: gallery ?? this.gallery,
+      crop: crop ?? this.crop,
       processing: processing ?? this.processing,
       theme: theme ?? this.theme,
       showPreviewAfterCapture:
