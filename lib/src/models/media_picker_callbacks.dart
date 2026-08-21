@@ -19,6 +19,12 @@ class MediaPickerCallbacks {
   /// Called when a capture fails.
   final void Function(Object error, StackTrace stackTrace)? onCaptureFailed;
 
+  /// Called when the interactive crop editor is opened.
+  final void Function()? onCropStarted;
+
+  /// Called when the user finishes cropping, with the cropped result.
+  final void Function(MediaResult result)? onCropCompleted;
+
   /// Called when the gallery picker is opened.
   final void Function()? onGalleryOpened;
 
@@ -34,6 +40,8 @@ class MediaPickerCallbacks {
     this.onCaptureStarted,
     this.onCaptureCompleted,
     this.onCaptureFailed,
+    this.onCropStarted,
+    this.onCropCompleted,
     this.onGalleryOpened,
     this.onGallerySelected,
     this.onCancelled,

@@ -2,6 +2,7 @@ import 'camera_capture_config.dart';
 import 'camera_enums.dart';
 import 'gallery_picker_config.dart';
 import 'image_processing_config.dart';
+import 'interactive_crop_config.dart';
 import 'media_picker_config.dart';
 import 'media_source.dart';
 
@@ -12,13 +13,15 @@ import 'media_source.dart';
 class MediaPickerPresets {
   const MediaPickerPresets._();
 
-  /// Front-camera, square, ~1000px, quality 85 — suitable for avatars.
+  /// Front-camera, interactive circular crop, ~1000px, quality 85 — suitable
+  /// for user avatars.
   static const MediaPickerConfig profilePhoto = MediaPickerConfig(
     sources: [MediaSource.camera, MediaSource.gallery],
     camera: CameraCaptureConfig(
       preferredLens: CameraLens.front,
       resolution: CameraResolution.high,
     ),
+    crop: InteractiveCropConfig.circle,
     processing: ImageProcessingConfig(
       quality: 85,
       maxWidth: 1000,
@@ -27,8 +30,9 @@ class MediaPickerPresets {
     ),
   );
 
-  /// Square 1:1 image at ~1200px — a generic square-crop preset.
+  /// Square 1:1 image at ~1200px with an interactive square crop.
   static const MediaPickerConfig squareImage = MediaPickerConfig(
+    crop: InteractiveCropConfig.square,
     processing: ImageProcessingConfig(
       quality: 85,
       maxWidth: 1200,

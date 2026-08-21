@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **Interactive cropping** via `InteractiveCropConfig` (backed by
+  `image_cropper`): a full-screen crop editor shown after capture/selection and
+  before processing, on Android and iOS. Supports fixed/free aspect ratio,
+  aspect-ratio lock, rectangular or oval (circular) mask, preset ratios, quality,
+  and theme-aware toolbar colors. Presets `InteractiveCropConfig.square`,
+  `.circle`, and `.disabled`; `MediaPickerConfig.crop` wires it in (disabled by
+  default). New `onCropStarted` / `onCropCompleted` callbacks.
+- `ImageCropperCropAdapter` (plugin-backed) and `PassthroughCropAdapter`
+  (desktop no-op) implementing the now-active `ImageCropperAdapter` interface.
+- `profilePhoto` (circular) and `squareImage` presets now enable interactive
+  cropping.
+
+> **Android:** apps enabling interactive cropping must register `UCropActivity`
+> in their `AndroidManifest.xml` — see the README.
+
 ## 0.1.0
 
 Initial release.

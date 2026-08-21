@@ -46,6 +46,55 @@ void main() {
     });
   });
 
+  group('InteractiveCropConfig', () {
+    test('valid by default', () {
+      expect(const InteractiveCropConfig().validate, returnsNormally);
+    });
+
+    test('rejects compressQuality out of range', () {
+      expect(
+        const InteractiveCropConfig(compressQuality: 0).validate,
+        throwsArgumentError,
+      );
+      expect(
+        const InteractiveCropConfig(compressQuality: 101).validate,
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects non-positive aspect ratio', () {
+      expect(
+        const InteractiveCropConfig(aspectRatio: 0).validate,
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects lockAspectRatio without an aspect ratio', () {
+      expect(
+        const InteractiveCropConfig(lockAspectRatio: true).validate,
+        throwsArgumentError,
+      );
+    });
+
+    test('square and circle presets are aspect-locked at 1:1', () {
+      expect(InteractiveCropConfig.square.aspectRatio, 1);
+      expect(InteractiveCropConfig.square.lockAspectRatio, isTrue);
+      expect(InteractiveCropConfig.circle.shape, CropShape.oval);
+    });
+
+    test('disabled preset is disabled', () {
+      expect(InteractiveCropConfig.disabled.enabled, isFalse);
+    });
+
+    test('copyWith replaces fields', () {
+      const base = InteractiveCropConfig();
+      final updated = base.copyWith(aspectRatio: 1.5, showGrid: false);
+      expect(updated.aspectRatio, 1.5);
+      expect(updated.showGrid, isFalse);
+      expect(updated.compressQuality, base.compressQuality);
+    });
+  });
+
   group('CameraCaptureConfig', () {
     test('valid by default', () {
       expect(const CameraCaptureConfig().validate, returnsNormally);
@@ -105,6 +154,17 @@ void main() {
         processing: ImageProcessingConfig(quality: 200),
       );
       expect(config.validate, throwsArgumentError);
+    });
+
+    test('cascades validation to the crop config', () {
+      const config = MediaPickerConfig(
+        crop: InteractiveCropConfig(compressQuality: 0),
+      );
+      expect(config.validate, throwsArgumentError);
+    });
+
+    test('crop is disabled by default', () {
+      expect(const MediaPickerConfig().crop.enabled, isFalse);
     });
   });
 }

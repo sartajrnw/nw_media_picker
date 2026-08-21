@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../adapters/image_cropper_adapter.dart';
 import '../exceptions/media_picker_exception.dart';
 import '../logging/media_picker_logger.dart';
 import '../models/media_capabilities.dart';
@@ -30,6 +31,10 @@ class NWMediaPickerService {
   final PlatformResolver _resolver;
   final MediaPickerCallbacks _callbacks;
 
+  /// Optional injected cropper. When null, one is resolved per-call from the
+  /// [PlatformResolver] so it can be themed to the active request.
+  final ImageCropperAdapter? _cropper;
+
   /// Creates a service. All dependencies are optional and default to the
   /// production implementations.
   factory NWMediaPickerService({
@@ -38,6 +43,7 @@ class NWMediaPickerService {
     PermissionService? permissionService,
     ImageProcessor? processor,
     PlatformResolver? resolver,
+    ImageCropperAdapter? cropper,
     MediaPickerCallbacks callbacks = const MediaPickerCallbacks(),
   }) {
     final log = logger ?? const DebugMediaPickerLogger();
@@ -58,6 +64,7 @@ class NWMediaPickerService {
       permissionService: perms,
       processor: proc,
       resolver: res,
+      cropper: cropper,
       callbacks: callbacks,
     );
   }
@@ -68,16 +75,53 @@ class NWMediaPickerService {
     required PermissionService permissionService,
     required ImageProcessor processor,
     required PlatformResolver resolver,
+    required ImageCropperAdapter? cropper,
     required MediaPickerCallbacks callbacks,
   }) : _logger = logger,
        _tempManager = tempManager,
        _permissionService = permissionService,
        _processor = processor,
        _resolver = resolver,
+       _cropper = cropper,
        _callbacks = callbacks;
 
   MediaPickerTheme _themeFor(BuildContext context, MediaPickerConfig config) {
     return config.theme ?? MediaPickerTheme.fromTheme(Theme.of(context));
+  }
+
+  /// Runs the interactive crop step when enabled, returning the (possibly)
+  /// cropped result.
+  ///
+  /// Returns [raw] unchanged when cropping is disabled. Returns `null` to signal
+  /// the user cancelled the crop editor and the flow should abort (unless
+  /// [InteractiveCropConfig.cancelReturnsOriginal] is set, in which case [raw]
+  /// is returned). Callers are responsible for firing `onCancelled` on a null
+  /// result. A genuine cropper failure throws a [MediaPickerException].
+  Future<MediaResult?> _maybeCrop(
+    MediaResult raw,
+    MediaPickerConfig config,
+    MediaPickerTheme theme,
+  ) async {
+    if (!config.crop.enabled) return raw;
+
+    final cropper = _cropper ?? _resolver.resolveCropAdapter(theme: theme);
+    _callbacks.onCropStarted?.call();
+    final croppedPath = await cropper.crop(
+      imagePath: raw.path,
+      config: config.crop,
+    );
+
+    if (croppedPath == null) {
+      // The user cancelled the crop editor.
+      return config.crop.cancelReturnsOriginal ? raw : null;
+    }
+
+    // A pass-through cropper (desktop) returns the original path untouched.
+    final cropped = croppedPath == raw.path
+        ? raw
+        : raw.copyWith(path: croppedPath, mimeType: 'image/jpeg');
+    _callbacks.onCropCompleted?.call(cropped);
+    return cropped;
   }
 
   /// Picks a single image, showing a source chooser when multiple sources are
@@ -170,9 +214,15 @@ class NWMediaPickerService {
         _callbacks.onCancelled?.call();
         return null;
       }
+      // Interactive crop (when enabled) before optimization.
+      final cropped = await _maybeCrop(raw, config, theme);
+      if (cropped == null) {
+        _callbacks.onCancelled?.call();
+        return null;
+      }
       // If the raw result already came from the gallery shortcut, it is a
       // gallery selection; process it the same way.
-      final processed = await _processor.process(raw, config.processing);
+      final processed = await _processor.process(cropped, config.processing);
       _callbacks.onCaptureCompleted?.call(processed);
       return processed;
     } on MediaPickerException catch (e, s) {
@@ -205,7 +255,16 @@ class NWMediaPickerService {
         _callbacks.onCancelled?.call();
         return null;
       }
-      final processed = await _processor.process(raw, config.processing);
+      final cropped = await _maybeCrop(
+        raw,
+        config,
+        config.theme ?? const MediaPickerTheme(),
+      );
+      if (cropped == null) {
+        _callbacks.onCancelled?.call();
+        return null;
+      }
+      final processed = await _processor.process(cropped, config.processing);
       _callbacks.onGallerySelected?.call([processed]);
       return processed;
     } on MediaPickerException {
@@ -240,9 +299,18 @@ class NWMediaPickerService {
         _callbacks.onCancelled?.call();
         return const [];
       }
+      final theme = config.theme ?? const MediaPickerTheme();
       final processed = <MediaResult>[];
       for (final raw in rawList) {
-        processed.add(await _processor.process(raw, config.processing));
+        // Crop each image in turn. A cancelled crop skips that image rather
+        // than aborting the whole batch.
+        final cropped = await _maybeCrop(raw, config, theme);
+        if (cropped == null) continue;
+        processed.add(await _processor.process(cropped, config.processing));
+      }
+      if (processed.isEmpty) {
+        _callbacks.onCancelled?.call();
+        return const [];
       }
       _callbacks.onGallerySelected?.call(processed);
       return processed;

@@ -255,8 +255,9 @@ The package depends on **no** crash/analytics SDK. Plug in your own:
 After capture/selection the image runs through a memory-safe pipeline:
 
 ```
-read dimensions (header only) → correct orientation → resize → optional crop
-→ compress → collect metadata → MediaResult
+[optional interactive crop] → read dimensions (header only) → correct
+orientation → resize → optional auto center-crop → compress → collect metadata
+→ MediaResult
 ```
 
 * Resizing/compression run **natively** (`flutter_image_compress`) reading from
@@ -270,6 +271,60 @@ read dimensions (header only) → correct orientation → resize → optional cr
 
 Recommended defaults: `quality: 85`, longest side ~1600–1920px. Example: a
 4032×3024 / 6.5 MB capture becomes ~1600×1200 / ~300 KB–1 MB.
+
+---
+
+## Interactive cropping
+
+Two kinds of cropping are available:
+
+* **Automatic center-crop** — `ImageProcessingConfig.cropAspectRatio` silently
+  crops to a fixed ratio during processing (no UI).
+* **Interactive crop** — `InteractiveCropConfig` opens a full-screen crop editor
+  (backed by [`image_cropper`](https://pub.dev/packages/image_cropper): UCrop on
+  Android, TOCropViewController on iOS) **before** processing, letting the user
+  pan, zoom, and choose the crop.
+
+```dart
+final result = await NWMediaPicker.pickImage(
+  context,
+  config: const MediaPickerConfig(
+    crop: InteractiveCropConfig(
+      aspectRatio: 1,          // omit for a free crop
+      lockAspectRatio: true,
+      shape: CropShape.oval,   // circular mask (e.g. avatars)
+      toolbarTitle: 'Adjust photo',
+    ),
+  ),
+);
+```
+
+Ready-made presets: `InteractiveCropConfig.square`, `.circle`, `.disabled`. The
+`profilePhoto` and `squareImage` presets already enable it.
+
+Behavior:
+
+* Colors left null on `InteractiveCropConfig` fall back to the active
+  `MediaPickerTheme`, so the editor matches your app automatically.
+* Cancelling the editor cancels the whole pick (returns `null`) unless
+  `cancelReturnsOriginal: true`, which keeps the uncropped image.
+* On desktop (no cropper) the step is skipped and the original image is used.
+* Observe it via the `onCropStarted` / `onCropCompleted` callbacks.
+
+### Android setup
+
+The interactive cropper requires `UCropActivity` in your app's
+`android/app/src/main/AndroidManifest.xml`, inside `<application>`:
+
+```xml
+<activity
+    android:name="com.yalantis.ucrop.UCropActivity"
+    android:screenOrientation="portrait"
+    android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+```
+
+No iOS setup is required. (If you never enable `InteractiveCropConfig`, this
+activity is unnecessary.)
 
 ---
 
@@ -311,16 +366,14 @@ final bytes = await NWMediaPicker.getTemporaryCacheSize();
 ## Known limitations (v1)
 
 * Desktop (Windows/macOS/Linux) camera capture is unsupported (gallery works).
-* Interactive cropping is not bundled; `cropAspectRatio` performs an automatic
-  center-crop. An `ImageCropperAdapter` interface is provided so an interactive
-  cropper can be added later without an API change.
+* Interactive cropping is unsupported on desktop (the step is skipped there);
+  it works on Android/iOS via `InteractiveCropConfig`.
 * iOS custom camera reuses the CameraX-backed page via
   `CameraExperience.custom`; the default remains the native camera.
 * Output is always JPEG.
 
 ## Recommended future improvements
 
-* Interactive crop adapter (e.g. `image_cropper`).
 * Video capture, document scanner, edge detection, OCR, barcode scanning.
 * Desktop/web camera adapters.
 * Isolate-based processing for platforms without a native compressor.
