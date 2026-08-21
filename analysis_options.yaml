@@ -1,0 +1,26 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-raw-types: true
+  errors:
+    # Treat missing public API docs as a warning to encourage documentation.
+    public_member_api_docs: ignore
+
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_locals: true
+    avoid_print: true
+    unawaited_futures: true
+    always_declare_return_types: true
+    prefer_single_quotes: true
+    use_super_parameters: true
+    sort_child_properties_last: true
+    # Named parameters cannot be private, so private-field constructors must use
+    # `: _field = param`; the initializing-formal lint is a false positive here.
+    prefer_initializing_formals: false
+    # Explicit default values in presets/config are intentional for readability.
+    avoid_redundant_argument_values: false

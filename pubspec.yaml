@@ -1,0 +1,34 @@
+name: nw_media_picker
+description: >-
+  A generic, application-agnostic Flutter package for capturing and selecting
+  images with a reliable in-app camera on Android, native camera on iOS, and
+  graceful desktop/gallery fallbacks behind one stable API.
+version: 0.1.0
+homepage:
+publish_to: none
+# Licensed under the MIT License — see LICENSE.
+
+environment:
+  sdk: ^3.12.0
+  flutter: '>=3.3.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  camera: ^0.11.0
+  image_picker: ^1.1.2
+  cross_file: ^0.3.4
+  flutter_image_compress: ^2.3.0
+  permission_handler: ^11.3.1
+  path_provider: ^2.1.4
+  path: ^1.9.0
+  mime: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
